@@ -16,3 +16,21 @@ def authenticate_user(username: str, password: str):
         return dict(user)
     return None
 
+def create_user(username: str, password: str, role: str):
+    username = username.strip()
+    if not username or not password or role not in {"Admin", "Contributor", "Student"}:
+        return False
+    conn = get_db()
+    try:
+        pw_hash = hash_password(password)
+        conn.execute("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+                     (username, pw_hash, role))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error creating user: {e}")
+        return False
+    finally:
+        conn.close()
+
+
