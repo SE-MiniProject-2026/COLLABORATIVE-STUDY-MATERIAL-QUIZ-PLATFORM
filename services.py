@@ -16,3 +16,20 @@ def upload_material(title, subject, description, file_obj, uploader_id, filename
     conn.commit()
     conn.close()
     return True
+
+
+def delete_material(material_id):
+    conn = get_db()
+    material = conn.execute(
+        "SELECT filename FROM materials WHERE id = ?", (material_id,)
+    ).fetchone()
+    if not material:
+        conn.close()
+        return False
+    filepath = os.path.join(UPLOAD_DIR, material["filename"])
+    if os.path.exists(filepath):
+        os.remove(filepath)
+    conn.execute("DELETE FROM materials WHERE id = ?", (material_id,))
+    conn.commit()
+    conn.close()
+    return True
