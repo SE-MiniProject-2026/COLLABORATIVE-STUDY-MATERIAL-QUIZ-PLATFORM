@@ -12,6 +12,7 @@ def get_db():
     conn = sqlite3.connect(DB_NAME)
     conn.row_factory = sqlite3.Row
     return conn
+
 def init_db():
     if not os.path.exists(UPLOAD_DIR):
         os.makedirs(UPLOAD_DIR)
@@ -93,3 +94,18 @@ def init_db():
             FOREIGN KEY(quiz_id) REFERENCES quizzes(id)
         )
     ''')
+    
+    conn.commit()
+    admin = cursor.execute(
+        "SELECT id FROM users WHERE username = ?", (ADMIN_USERNAME,)
+    ).fetchone()
+    if not admin:
+        cursor.execute(
+            "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+            (ADMIN_USERNAME, bcrypt.hash(ADMIN_PASSWORD), "Admin"),
+        )
+        conn.commit()
+    conn.close()
+
+if __name__ == "__main__":
+    init_db()
