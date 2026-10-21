@@ -1,4 +1,5 @@
 .venv/
-files/*
-tests/*
-
+files/
+tests/
+csmq.db
+__pycache__/
