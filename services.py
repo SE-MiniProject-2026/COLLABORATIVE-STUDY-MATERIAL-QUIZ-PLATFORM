@@ -33,3 +33,21 @@ def delete_material(material_id):
     conn.commit()
     conn.close()
     return True
+
+def get_material_path(material_id):
+    conn = get_db()
+    material = conn.execute(
+        "SELECT filename FROM materials WHERE id = ?", (material_id,)
+    ).fetchone()
+    conn.close()
+    if not material:
+        return None
+    filepath = os.path.join(UPLOAD_DIR, material["filename"])
+    return filepath if os.path.isfile(filepath) else None
+
+def search_materials(query=""):
+    conn = get_db()
+    q = f"%{query}%"
+    rows = conn.execute("SELECT * FROM materials WHERE title LIKE ? OR subject LIKE ? OR description LIKE ?", (q, q, q)).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
