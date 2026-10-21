@@ -2,6 +2,7 @@ import os
 import json
 from database import get_db, UPLOAD_DIR, TEST_DIR
 
+# --- Study Materials ---
 def upload_material(title, subject, description, file_obj, uploader_id, filename=None):
     filename = os.path.basename(filename or file_obj.name)
     if not title.strip() or not subject.strip():
@@ -16,7 +17,6 @@ def upload_material(title, subject, description, file_obj, uploader_id, filename
     conn.commit()
     conn.close()
     return True
-
 
 def delete_material(material_id):
     conn = get_db()
@@ -52,7 +52,7 @@ def search_materials(query=""):
     conn.close()
     return [dict(r) for r in rows]
 
-
+# --- Question Bank & Quizzes ---
 def create_question(text, options, correct_answer, topic, creator_id):
     conn = get_db()
     conn.execute("INSERT INTO questions (question_text, options, correct_answer, topic, creator_id) VALUES (?, ?, ?, ?, ?)",
@@ -136,3 +136,49 @@ def get_test_results(test_id):
     ).fetchall()
     conn.close()
     return [dict(row) for row in rows]
+
+# --- Evaluation & Analytics ---
+def submit_quiz_attempt(student_id, quiz_id, student_answers):
+    conn = get_db()
+    test_path = os.path.join(TEST_DIR, f"{quiz_id}.json")
+    if os.path.isfile(test_path):
+        with open(test_path, encoding="utf-8") as file:
+            questions = json.load(file)["questions"]
+        correct_answers = {
+            str(index): question["answer"]
+            for index, question in enumerate(questions)
+        }
+    else:
+        rows = conn.execute("""
+            SELECT q.id, q.correct_answer FROM questions q
+            JOIN quiz_questions qq ON q.id = qq.question_id
+            WHERE qq.quiz_id = ?
+        """, (quiz_id,)).fetchall()
+        correct_answers = {str(row["id"]): row["correct_answer"] for row in rows}
+
+    score = 0
+    total = len(correct_answers)
+    for question_id, correct_answer in correct_answers.items():
+        if student_answers.get(question_id) == correct_answer:
+            score += 1
+            
+    percentage = (score / total) * 100 if total > 0 else 0
+    
+    conn.execute("INSERT INTO attempts (student_id, quiz_id, score, answers) VALUES (?, ?, ?, ?)",
+                 (student_id, quiz_id, percentage, str(student_answers)))
+    conn.commit()
+    conn.close()
+    return percentage
+
+def get_performance_summary(student_id):
+    conn = get_db()
+    attempts = conn.execute("SELECT * FROM attempts WHERE student_id = ?", (student_id,)).fetchall()
+    conn.close()
+    if not attempts:
+        return {"avg_score": 0, "total_attempts": 0}
+    scores = [a["score"] for a in attempts]
+    return {
+        "avg_score": sum(scores) / len(scores),
+        "total_attempts": len(attempts),
+        "history": [dict(a) for a in attempts]
+    }
