@@ -33,4 +33,5 @@ def create_user(username: str, password: str, role: str):
     finally:
         conn.close()
 
-
+def register_student(username: str, password: str) -> bool:
+    return create_user(username, password, "Student")
