@@ -30,7 +30,7 @@ jobs:
         run: rm -f csmq.db
 
       - name: Run unit tests
-        run: python -m unittest -v test
+        run: python -m unittest -v tests.py
 
       - name: Delete test database
         if: always()
