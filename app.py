@@ -63,15 +63,13 @@ def main_page():
                     ui.notify("Username may already exist or fields are empty.", type="negative")
 
             ui.button("Register as Student", on_click=register).classes("w-full")
-            
-    return
+        return
 
     user = current_user["user"]
     ui.label(f"Welcome, {user['username']} ({user['role']})").classes("text-lg")
-    ui.button(
-        "Logout",
-        on_click=lambda: (current_user.update({"user": None}), refresh_page()),
-    ).classes("bg-red-500 text-white")
+    ui.button("Logout", on_click=lambda: (current_user.update(user=None), refresh_page())).classes(
+        "bg-red-500 text-white"
+    )
 
     with ui.tabs().classes("w-full mt-4") as tabs:
         materials_tab = ui.tab("Shared Materials")
@@ -149,7 +147,9 @@ def main_page():
                     answers = {}
                     for index, question in enumerate(test["questions"]):
                         ui.label(question["question"]).classes("font-semibold")
-                        answers[str(index)] = ui.radio(question["options"])
+                        answers[str(index)] = ui.radio(
+                            question["options"]
+                        )
 
                     def submit(test=test, answers=answers):
                         selected = {key: value.value for key, value in answers.items()}
@@ -283,4 +283,4 @@ def main_page():
                     tabs.value = admin_results_tab
 
 
-ui.run(port=8080)        
+ui.run(port=8080)
