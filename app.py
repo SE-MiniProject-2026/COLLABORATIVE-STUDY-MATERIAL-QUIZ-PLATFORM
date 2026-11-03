@@ -22,11 +22,13 @@ current_user = {"user": None}
 
 
 def refresh_page():
+    """Navigate back to the application's home page."""
     ui.navigate.to("/")
 
 
 @ui.page("/")
 def main_page():
+    """Display the main application page based on the user's login status and role."""
     ui.label("Collaborative Study Material & Quiz Platform").classes(
         "text-2xl font-bold mb-4"
     )
@@ -38,6 +40,7 @@ def main_page():
             password = ui.input("Password", password=True)
 
             def login():
+                """Authenticate the user and log them into the application."""
                 user = authenticate_user(username.value, password.value)
                 if user:
                     current_user["user"] = user
@@ -53,6 +56,7 @@ def main_page():
             register_password = ui.input("New password", password=True)
 
             def register():
+                """Register a new student account and log the student into the application."""
                 if register_student(register_username.value, register_password.value):
                     ui.notify("Registration successful. You are now logged in.", type="positive")
                     current_user["user"] = authenticate_user(
@@ -87,6 +91,7 @@ def main_page():
             material_list = ui.column()
 
             def render_materials():
+                """Display the available study materials with their download and delete options."""
                 material_list.clear()
                 with material_list:
                     for material in search_materials(search.value or ""):
@@ -119,6 +124,7 @@ def main_page():
             description = ui.input("Description")
 
             async def handle_upload(event):
+                """Handle file uploads and save the material details."""
                 try:
                     file_data = await event.file.read()
                     upload_material(
@@ -152,6 +158,7 @@ def main_page():
                         )
 
                     def submit(test=test, answers=answers):
+                        """Submit the student's test answers and display the result."""
                         selected = {key: value.value for key, value in answers.items()}
                         score = submit_quiz_attempt(user["id"], test["id"], selected)
                         ui.notify(f"Your score is {score:.2f}%.", type="positive")
@@ -178,6 +185,7 @@ def main_page():
                 question_container = ui.column().classes("w-full")
 
                 def add_question():
+                    """Add a new question with four options and a correct answer."""
                     with question_container:
                         with ui.card().classes("w-full"):
                             question_number = len(question_list) + 1
@@ -202,6 +210,7 @@ def main_page():
                 ui.button("Add another question", on_click=add_question)
 
                 def save_test():
+                    """Validate the questions and publish the multiple-choice test."""
                     try:
                         questions = []
                         for question_text, option_inputs, correct_option in question_list:
@@ -264,6 +273,7 @@ def main_page():
                 ).classes("w-full")
 
                 def show_results(test_id):
+                    """Display the results submitted by students for the selected test."""
                     selected_test = next(
                         (test for test in get_tests() if test["id"] == test_id), None
                     )
