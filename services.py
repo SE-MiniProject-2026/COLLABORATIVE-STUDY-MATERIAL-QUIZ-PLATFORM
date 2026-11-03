@@ -3,6 +3,20 @@ import json
 from database import get_db, UPLOAD_DIR, TEST_DIR
 
 # --- Study Materials ---
+
+"""
+@description: This function handles the uploading of study materials. It saves the uploaded file to the server and records its metadata in the database. It ensures that both title and subject are provided,
+and it uses the provided filename or defaults to the original filename of the uploaded file.
+
+@input title: str - The title of the material
+@input subject: str - The subject of the material
+@input description: str - A brief description of the material
+@input file_obj: file-like object - The uploaded file object
+@input uploader_id: int - The ID of the user uploading the material
+@input filename: str (optional) - The name of the file to save as; if not provided, the original filename will be used
+
+@output: bool - Returns True if the upload was successful, raises ValueError if title or subject is empty
+"""
 def upload_material(title, subject, description, file_obj, uploader_id, filename=None):
     filename = os.path.basename(filename or file_obj.name)
     if not title.strip() or not subject.strip():
@@ -18,6 +32,15 @@ def upload_material(title, subject, description, file_obj, uploader_id, filename
     conn.close()
     return True
 
+
+"""
+@description: This function deletes a study material from the database and removes its associated file from the server. It first checks if the material exists, and if so, it deletes the file and the database record.
+
+@input material_id: int - The ID of the material to delete
+
+@output: bool - Returns True if the deletion was successful, False if the material does not
+    exist.
+"""
 def delete_material(material_id):
     conn = get_db()
     material = conn.execute(
@@ -34,6 +57,15 @@ def delete_material(material_id):
     conn.close()
     return True
 
+"""
+@description: This function retrieves the file path of a study material based on its ID. It queries the database for the filename and constructs the full path to the file on the server. If the material does not exist or the file is missing, it returns None.
+
+@input material_id: int - The ID of the material to retrieve
+
+@output: str or None - Returns the file path if the material exists and the file is
+    present, otherwise returns None.
+"""
+
 def get_material_path(material_id):
     conn = get_db()
     material = conn.execute(
@@ -44,6 +76,15 @@ def get_material_path(material_id):
         return None
     filepath = os.path.join(UPLOAD_DIR, material["filename"])
     return filepath if os.path.isfile(filepath) else None
+
+
+"""
+@description: This function searches for study materials in the database based on a query string. It looks for matches in the title, subject, or description fields of the materials. The search is case-insensitive and uses SQL LIKE syntax to find partial matches.
+
+@input query: str - The search query string
+
+@output: list of dict - Returns a list of dictionaries, each representing a material that matches the search criteria. Each dictionary contains the material's details such as id, title, subject, description, filename, and uploader_id.
+"""
 
 def search_materials(query=""):
     conn = get_db()
