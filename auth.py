@@ -33,6 +33,6 @@ def create_user(username: str, password: str, role: str):
         return False
     finally:
         conn.close()
-
+# Call back for creating a new user
 def register_student(username: str, password: str) -> bool:
     return create_user(username, password, "Student")
