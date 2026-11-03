@@ -11,11 +11,12 @@ def authenticate_user(username: str, password: str):
     conn = get_db()
     user = conn.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
     conn.close()
-    
+   
     if user and user["status"] == "Active" and verify_password(password, user["password_hash"]):
         return dict(user)
     return None
 
+# Creates A NEW USER AND STORES CREDENTIALS
 def create_user(username: str, password: str, role: str):
     username = username.strip()
     if not username or not password or role not in {"Admin", "Contributor", "Student"}:
