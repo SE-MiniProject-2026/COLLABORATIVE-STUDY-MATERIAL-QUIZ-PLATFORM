@@ -94,12 +94,34 @@ def search_materials(query=""):
     return [dict(r) for r in rows]
 
 # --- Question Bank & Quizzes ---
+"""
+@description: This function creates a new question in the database. It takes the question text, options, correct answer, topic, and the ID of the creator as inputs. The question is then inserted into the 'questions' table.
+
+@input text: str - The text of the question
+@input options: list - A list of possible answer options for the question
+@input correct_answer: str - The correct answer for the question
+@input topic: str - The topic or category of the question
+@input creator_id: int - The ID of the user creating the question
+
+@output: None - The function does not return any value, but it inserts the question into
+"""
 def create_question(text, options, correct_answer, topic, creator_id):
     conn = get_db()
     conn.execute("INSERT INTO questions (question_text, options, correct_answer, topic, creator_id) VALUES (?, ?, ?, ?, ?)",
                  (text, options, correct_answer, topic, creator_id))
     conn.commit()
     conn.close()
+
+"""
+@description: This function creates a new quiz in the database. It takes the quiz title, instructions, a list of question IDs, and the ID of the creator as inputs. The quiz is inserted into the 'quizzes' table, and each question ID is associated with the quiz in the 'quiz_questions' table.
+
+@input title: str - The title of the quiz
+@input instructions: str - Instructions for the quiz
+@input question_ids: list - A list of question IDs to be included in the quiz
+@input creator_id: int - The ID of the user creating the quiz
+
+@output: None - The function does not return any value, but it inserts the quiz and its associated questions into the database.
+"""
 
 def create_quiz(title, instructions, question_ids, creator_id):
     conn = get_db()
@@ -110,6 +132,18 @@ def create_quiz(title, instructions, question_ids, creator_id):
         cursor.execute("INSERT INTO quiz_questions (quiz_id, question_id) VALUES (?, ?)", (quiz_id, q_id))
     conn.commit()
     conn.close()
+    
+    
+"""
+@description: This function creates a new test in the database. It takes the test title, instructions, a list of questions (each with its own options and correct answer), and the ID of the creator as inputs. The test is inserted into the 'quizzes' table, and the questions are saved in a JSON file associated with the test.
+
+@input title: str - The title of the test
+@input instructions: str - Instructions for the test
+@input questions: list - A list of dictionaries, each representing a question with its text, options, and correct answer
+@input creator_id: int - The ID of the user creating the test
+
+@output: int - Returns the ID of the newly created test
+"""
 
 def create_test(title, instructions, questions, creator_id):
     title = (title or "").strip()
@@ -143,6 +177,13 @@ def create_test(title, instructions, questions, creator_id):
     conn.close()
     return test_id
 
+
+"""
+@description: This function retrieves all published tests from the database. It queries the 'quizzes' table for tests that are marked as published and then reads the associated JSON files for each test to return their details.
+
+@output: list of dict - Returns a list of dictionaries, each representing a published test with its details such as id, title, instructions, and questions.
+"""
+
 def get_tests():
     conn = get_db()
     rows = conn.execute(
@@ -157,6 +198,14 @@ def get_tests():
                 tests.append(json.load(file))
     return tests
 
+"""
+@description: This function deletes a test from the database and removes its associated JSON file from the server. It first deletes any related quiz questions and then removes the test record from the 'quizzes' table. Finally, it checks for the existence of the JSON file and deletes it if present.
+
+@input test_id: int - The ID of the test to delete
+
+@output: None - The function does not return any value, but it deletes the test and its associated data from the database and server.
+"""
+
 def delete_test(test_id):
     conn = get_db()
     conn.execute("DELETE FROM quiz_questions WHERE quiz_id = ?", (test_id,))
@@ -166,6 +215,14 @@ def delete_test(test_id):
     path = os.path.join(TEST_DIR, f"{test_id}.json")
     if os.path.isfile(path):
         os.remove(path)
+
+"""
+@description: This function retrieves the results of a specific test from the database. It queries the 'attempts' table for all attempts made on the specified test, joining with the 'users' table to get the usernames of the students who took the test. The results are ordered by submission time in descending order.
+
+@input test_id: int - The ID of the test for which to retrieve results
+
+@output: list of dict - Returns a list of dictionaries, each representing an attempt on the test with details such as score, submission time, and username of the student.
+"""
 
 def get_test_results(test_id):
     conn = get_db()
@@ -179,6 +236,16 @@ def get_test_results(test_id):
     return [dict(row) for row in rows]
 
 # --- Evaluation & Analytics ---
+
+"""
+@description: This function processes a student's quiz attempt by comparing their submitted answers with the correct answers stored in the database or in a JSON file for tests. It calculates the score as a percentage of correct answers, records the attempt in the 'attempts' table, and returns the calculated score.
+
+@input student_id: int - The ID of the student submitting the attempt
+@input quiz_id: int - The ID of the quiz being attempted
+@input student_answers: dict - A dictionary mapping question IDs to the student's submitted answers
+
+@output: float - Returns the score as a percentage of correct answers
+"""
 def submit_quiz_attempt(student_id, quiz_id, student_answers):
     conn = get_db()
     test_path = os.path.join(TEST_DIR, f"{quiz_id}.json")
@@ -210,6 +277,15 @@ def submit_quiz_attempt(student_id, quiz_id, student_answers):
     conn.commit()
     conn.close()
     return percentage
+
+"""
+@description: This function retrieves a summary of a student's performance across all their quiz attempts. It calculates the average score and total number of attempts, and also provides a history of all attempts made by the student.
+
+@input student_id: int - The ID of the student for whom to retrieve the performance summary
+
+@output: dict - Returns a dictionary containing the average score, total number of attempts, and a history of all attempts made by the student. The history is a list of dictionaries, each representing an attempt with details such as score and submission time.
+"""
+
 
 def get_performance_summary(student_id):
     conn = get_db()
