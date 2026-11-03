@@ -1,12 +1,12 @@
 from passlib.hash import bcrypt
 from database import get_db
-
+# Returns hash password from bcrypt
 def hash_password(password: str) -> str:
     return bcrypt.hash(password)
-
+# Verifies password using bcrypt
 def verify_password(password: str, hashed: str) -> bool:
     return bcrypt.verify(password, hashed)
-
+# Authenticates users using bcrypt ensuring security
 def authenticate_user(username: str, password: str):
     conn = get_db()
     user = conn.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
