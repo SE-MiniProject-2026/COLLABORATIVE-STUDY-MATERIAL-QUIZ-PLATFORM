@@ -8,11 +8,13 @@ TEST_DIR = "tests"
 ADMIN_USERNAME = os.environ.get("CSMQ_ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.environ.get("CSMQ_ADMIN_PASSWORD", "admin123")
 
+# Opens a connection to the SQLite database and returns it.
 def get_db():
     conn = sqlite3.connect(DB_NAME)
     conn.row_factory = sqlite3.Row
     return conn
 
+# Creates the required folders and database tables, and adds the admin user if needed.
 def init_db():
     if not os.path.exists(UPLOAD_DIR):
         os.makedirs(UPLOAD_DIR)
