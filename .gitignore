@@ -3,3 +3,4 @@ files/
 tests/
 csmq.db
 __pycache__/
+.coverage
